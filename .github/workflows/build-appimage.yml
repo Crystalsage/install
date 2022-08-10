@@ -4,6 +4,13 @@ on:
     tags:
       - 'v*'
 
+  workflow_dispatch:
+    inputs:
+      devRelease:
+        description: "Is this a dev release?"
+        required: true
+        type: boolean
+
 jobs:
   build:
     strategy:
@@ -13,12 +20,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Clone and run the AppImage script
+      - name: Run the AppImage script
         run: |
-          git clone https://github.com/ankitaS11/AppImageDataForFlint
-          cd AppImageDataForFlint
-          chmod +x ./AppImage_FLINT_Build.sh
-          ./AppImage_FLINT_Build.sh
+          curl "https://raw.githubusercontent.com/Crystalsage/install/main/appimage-scripts/AppImage_FLINT_Build.sh" | bash  
           mv /home/runner/tmp/FLINT/Source/build/FLINT-*.AppImage /home/runner/FLINT-${{ matrix.os }}.AppImage
 
       - name: Cache artifacts
@@ -50,10 +54,7 @@ jobs:
 
           /home/runner/FLINT-${{ matrix.os }}.AppImage --appimage-extract
           cd squashfs-root
-          wget "https://raw.githubusercontent.com/Crystalsage/github-releases-tests/main/test-appimage-artifacts.sh"
-          chmod +x test-appimage-artifacts.sh
-          ./test-appimage-artifacts.sh
-
+          curl "https://raw.githubusercontent.com/Crystalsage/install/main/appimage-scripts/test-appimage-artifacts.sh" | bash
 
   release:
     needs: [build, test]
@@ -71,7 +72,19 @@ jobs:
           path: /home/runner/FLINT-${{ matrix.os }}.AppImage
           key: ${{ matrix.os }}-appimage
 
-      - name: Create release
+      - name: Create dev release
+        if: ${{ inputs.devRelease }}
+        uses: ncipollo/release-action@v1
+        with: 
+          allowUpdates: true
+          name: "Dev release"
+          tag: "dev"
+          prerelease: False
+          artifacts: "/home/runner/FLINT-*.AppImage"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create production release
+        if: ${{ !inputs.devRelease }}
         uses: ncipollo/release-action@v1
         with: 
           allowUpdates: true
