@@ -86,13 +86,19 @@ jobs:
           path: /home/runner/FLINT-${{ matrix.os }}.AppImage
           key: ${{ matrix.os }}-appimage
 
+      - name: Get latest commit hash
+        id: commit_hash
+        shell: bash
+        run: |
+          echo "::set-output name=commit_sha::$(git rev-parse --short HEAD)"
+
       - name: Create dev release
         if: ${{ inputs.devRelease }}
         uses: ncipollo/release-action@v1
         with: 
           allowUpdates: true
           name: "Dev release"
-          tag: "dev"
+          tag: ${{ format('dev-{0}', steps.commit_hash.outputs.commit_sha) }}
           prerelease: False
           artifacts: "/home/runner/FLINT-*.AppImage"
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -105,7 +111,7 @@ jobs:
         with: 
           allowUpdates: true
           bodyfile: .github/release.md
-          tag: "production"
+          tag: ${{ format('stable-{0}', steps.commit_hash.outputs.commit_sha) }}
           prerelease: False
           artifacts: "/home/runner/FLINT-*.AppImage"
           token: ${{ secrets.GITHUB_TOKEN }}
