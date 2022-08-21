@@ -11,6 +11,10 @@
 
 export FLINT_HOME_DIR=$HOME/.local/bin/
 
+
+FLINT_GITHUB_URL="https://api.github.com/repos/moja-global/install/releases/latest"
+FLINT_LATEST_VERSION=$(curl $FLINT_GITHUB_URL | jq -r '.assets[].browser_download_url')
+
 OPT_INSTALL=0
 OPT_UNINSTALL=0
 
@@ -91,7 +95,7 @@ main() {
 	fi
 
 	if $OPT_UPDATE == 1; then
-		fetch_release
+		check_version
 	fi
 
 	if $OPT_HELP == 1; then
